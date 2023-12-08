@@ -18,6 +18,9 @@ function plotCaTracesWithStim(traceData, framerate, varargin)
     %   Optional name-value pairs:
     %   'stimTimes'   - Array of stimulation start times in seconds.
     %   'stimDuration'- Duration of each stimulation period in seconds.
+    %  'axesHandle'  - Handle to the axes to plot in.
+    % 'stimTimes2'   - Array of stimulation start times in seconds.
+    %   'stimDuration2'- Duration of each stimulation period in seconds.
     %   'plotTitle'   - String for the plot's title.
     %
     %   Examples:
@@ -36,6 +39,11 @@ function plotCaTracesWithStim(traceData, framerate, varargin)
     % Optional parameters with default values
     addParameter(p, 'stimTimes', [], @(x) validateattributes(x, {'numeric'}, {'vector', 'nonnegative'}));
     addParameter(p, 'stimDuration', [], @(x) validateattributes(x, {'numeric'}, {'nonnegative', 'scalar'}));
+
+ addParameter(p, 'stimTimes2', [], @(x) validateattributes(x, {'numeric'}, {'vector', 'nonnegative'}));
+    addParameter(p, 'stimDuration2', [], @(x) validateattributes(x, {'numeric'}, {'nonnegative', 'scalar'}));
+   
+
     addParameter(p, 'axesHandle', gca, @(x) isempty(x) || isa(x, 'matlab.graphics.axis.Axes'));
     addParameter(p, 'plotTitle', 'Calcium Traces with Stimulation', @(x) validateattributes(x, {'char', 'string'}, {'scalartext'}));
     
@@ -45,33 +53,54 @@ function plotCaTracesWithStim(traceData, framerate, varargin)
     % Extract variables from parsed input
     stimTimes = p.Results.stimTimes;
     stimDuration = p.Results.stimDuration;
+
+    stimTimes2 = p.Results.stimTimes2;
+    stimDuration2 = p.Results.stimDuration2;
+
     axesHandle = p.Results.axesHandle;
     plotTitle = p.Results.plotTitle;
     
     % Call the function to plot calcium traces in our figure
     plotCaTracesFromROIdata(traceData, framerate, axesHandle);
 
-    % Overlay stimulation periods if provided
-    if ~isempty(stimTimes) && ~isempty(stimDuration)
-        hold(axesHandle, 'on');
 
-        for i = 1:length(stimTimes)
-            % Calculate the x coordinates for the left and right edges of the rectangle
-            xLeft = stimTimes(i);
-            xRight = stimTimes(i) + stimDuration;
 
-            % The y coordinates are the limits of the y axis
-            yLimits = ylim(axesHandle);
+ % Overlay stimulation periods if provided
+ if ~isempty(stimTimes) && ~isempty(stimDuration)
+     stimWindowColor = [0.9 0.9 0.9];
+stimWindowOpacity = 0.5;
+    hold(axesHandle, 'on');
+    for i = 1:length(stimTimes)
+        % The y coordinates are the limits of the y axis
+        yLimits = ylim(axesHandle);
 
-            % Define the rectangle's position and size
-            pos = [xLeft, yLimits(1), xRight - xLeft, yLimits(2) - yLimits(1)];
+        % Define the rectangle's position and duration
+        stimStart = stimTimes(i);
 
-            % Draw the rectangle with some transparency
-            rectangle('Position', pos, 'FaceColor', [0.9 0.9 0.9 0.5], 'EdgeColor', 'none', 'Parent', axesHandle);
-        end
-
-        hold(axesHandle, 'off');
+        % Draw the rectangle for each stimulation period
+        drawStimulationRectangle(axesHandle, stimStart, stimDuration, yLimits, stimWindowColor, stimWindowOpacity); 
     end
+    hold(axesHandle, 'off');
+ end
+
+  % Overlay stimulation periods if provided
+ if ~isempty(stimTimes2) && ~isempty(stimDuration2)
+     stimWindowColor = [1 0 0];
+stimWindowOpacity = 0.9;
+    hold(axesHandle, 'on');
+    for i = 1:length(stimTimes)
+        % The y coordinates are the limits of the y axis
+        yLimits = ylim(axesHandle);
+
+        % Define the rectangle's position and duration
+        stimStart = stimTimes2(i);
+
+        % Draw the rectangle for each stimulation period
+        drawStimulationRectangle(axesHandle, stimStart, stimDuration2, yLimits, stimWindowColor, stimWindowOpacity); 
+    end
+    hold(axesHandle, 'off');
+end
+
 
     % Set plot title
     title(axesHandle, plotTitle);
